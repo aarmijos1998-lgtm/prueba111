@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDI - Sistema de Evaluación Psicológica Avanzada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Quicksand:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: radial-gradient(circle at top right, #f0f9ff, #ffffff);
+            min-height: 100vh;
+            color: #0f172a;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .bubble-option {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .selected-bubble {
+            background: #0284c7 !important;
+            color: white !important;
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(2, 132, 199, 0.3);
+        }
+
+        #cat-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-8">
+
+    <!-- POPUP GATITO INICIAL -->
+    <div id="cat-popup">
+        <div class="bg-white p-8 rounded-[2.5rem] text-center shadow-2xl max-w-md border-4 border-sky-100">
+            <div class="text-7xl mb-6">🐱✨</div>
+            <h2 class="text-2xl font-black text-slate-800 mb-4">¡Hola! Soy Nacho</h2>
+            <div class="space-y-4 text-slate-600 leading-relaxed text-sm md:text-base">
+                <p>Estoy aquí para ayudarte a aplicar el <strong>Inventario de Depresión Infantil (CDI)</strong> de forma digital y segura.</p>
+                <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                    <p class="text-amber-800 font-bold">⚠️ Aviso Importante:</p>
+                    <p class="text-amber-700 text-xs mt-1">
+                        Este sistema es una herramienta de apoyo al tamizaje. 
+                        <strong>No reemplaza bajo ninguna circunstancia la valoración clínica de un profesional de la salud mental.</strong>
+                    </p>
+                </div>
+                <p class="font-medium">¿Listos para comenzar con Nacho?</p>
+            </div>
+            <button onclick="closePopup()" class="mt-8 w-full bg-sky-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-sky-700 transition-all shadow-lg active:scale-95">
+                ¡Entendido, vamos!
+            </button>
+        </div>
+    </div>
+
+    <div id="main-container" class="max-w-4xl mx-auto">
+        <!-- PANTALLA INICIAL -->
+        <section id="screen-setup" class="glass rounded-[2rem] p-6 md:p-12 mt-4">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Evaluación Clínica CDI</h1>
+                <p class="text-slate-500 mt-2 font-medium">Inventario de Depresión Infantil - Nacho System</p>
+            </div>
+
+            <form id="form-init" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-600">Nombre del Paciente</label>
+                        <input type="text" id="name" required class="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-600">Edad (7-17 años)</label>
+                        <input type="number" id="age" min="7" max="17" required class="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-600">Género</label>
+                        <select id="gender" class="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none bg-white">
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-600">Grado</label>
+                        <input type="text" id="grade" required class="w-full px-5 py-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="text-sm font-bold text-sky-700">Contraseña para el Informe</label>
+                        <input type="password" id="pass" required class="w-full px-5 py-4 rounded-xl border-2 border-sky-100 outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-sky-700 transition-all">
+                    Comenzar Evaluación
+                </button>
+            </form>
+        </section>
+
+        <!-- EVALUACIÓN -->
+        <section id="screen-game" class="hidden mt-4">
+            <div class="glass rounded-[2rem] p-6 md:p-12 relative">
+                <div class="mb-8 flex justify-between items-center">
+                    <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mr-4">
+                        <div id="game-progress" class="bg-sky-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <span class="text-sm font-bold text-slate-400 whitespace-nowrap"><span id="q-num">1</span> / 27</span>
+                </div>
+                <div class="text-center mb-10">
+                    <h2 class="text-xl md:text-3xl font-bold text-slate-800 leading-tight" id="question-text"></h2>
+                </div>
+                <div id="options-grid" class="space-y-3 md:space-y-4"></div>
+                <div class="mt-12 flex justify-end">
+                    <button id="btn-next" disabled class="w-full md:w-auto bg-sky-600 disabled:bg-slate-200 text-white px-12 py-4 rounded-xl font-bold transition-all shadow-lg text-lg">
+                        Siguiente
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA DE CIERRE -->
+        <section id="screen-lock" class="hidden glass rounded-[2.5rem] p-8 md:p-12 text-center mt-4">
+            <div class="mb-6 text-6xl">✔️</div>
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">Evaluación Completada</h2>
+            <p class="text-slate-500 mb-8">Por favor, entrega el dispositivo al profesional.</p>
+            <div class="max-w-xs mx-auto space-y-4">
+                <input type="password" id="lock-pass" placeholder="Contraseña de acceso" class="w-full p-4 rounded-xl border border-slate-200 text-center outline-none">
+                <button onclick="processFinalReport()" id="btn-unlock" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">
+                    Generar Informe Clínico
+                </button>
+                <p id="lock-error" class="text-red-500 text-sm hidden font-bold">Contraseña incorrecta</p>
+            </div>
+        </section>
+
+        <!-- INFORME CLÍNICO -->
+        <section id="screen-report" class="hidden mt-4 space-y-6 pb-20">
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center px-2">
+                <h2 class="text-xl md:text-2xl font-black text-slate-800 uppercase">Expediente Clínico</h2>
+                <div class="flex gap-3">
+                    <button onclick="restartApp()" class="bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-300">
+                        Reiniciar
+                    </button>
+                    <button onclick="exportPDF()" class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-red-700">
+                        Exportar PDF Completo
+                    </button>
+                </div>
+            </div>
+
+            <div id="report-view" class="bg-white rounded-[2rem] p-6 md:p-10 shadow-2xl border border-slate-100">
+                <div class="flex justify-between items-start mb-10 border-b pb-8">
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900">Resultado CDI</h3>
+                        <p class="text-sky-600 font-bold">Inventario de Depresión de Kovacs</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400 font-bold uppercase">Fecha</p>
+                        <p class="font-bold text-slate-800" id="rep-date"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="md:col-span-2 bg-slate-50 p-6 rounded-3xl">
+                        <div class="grid grid-cols-2 gap-4 text-sm font-bold text-slate-700">
+                            <p>Nombre: <span id="rep-name" class="text-slate-900"></span></p>
+                            <p>Edad: <span id="rep-age" class="text-slate-900"></span></p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center justify-center border-2 border-slate-50 rounded-3xl p-6">
+                        <span class="text-xs font-black text-slate-400 uppercase">Puntaje Directo</span>
+                        <div class="text-5xl font-black text-sky-600" id="rep-score">0</div>
+                        <div id="rep-badge" class="mt-4 px-4 py-1.5 rounded-full text-[10px] font-black uppercase text-white"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-sky-500 rounded-full"></span>
+                        Resumen del Análisis
+                    </h4>
+                    <div id="rep-analysis" class="text-slate-700 leading-relaxed space-y-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 italic"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const questions = [
+            { id: 1, label: "Estado de Ánimo", options: ["Estoy triste de vez en cuando", "Estoy triste muchas veces", "Estoy triste siempre"] },
+            { id: 2, label: "Pesimismo", options: ["Las cosas me saldrán bien", "No estoy seguro de si las cosas me saldrán bien", "Nunca me saldrá nada bien"] },
+            { id: 3, label: "Autodesprecio", options: ["Hago bien la mayoría de las cosas", "Hago mal muchas cosas", "Todo lo hago mal"] },
+            { id: 4, label: "Anhedonia", options: ["Me divierten muchas cosas", "Me divierten algunas cosas", "Nada me divierte"] },
+            { id: 5, label: "Conducta", options: ["Soy malo algunas veces", "Soy malo muchas veces", "Soy malo siempre"] },
+            { id: 6, label: "Preocupación/Miedo", options: ["A veces pienso que me pueden ocurrir cosas malas", "Me preocupa que me ocurran cosas malas", "Estoy seguro de que me van a ocurrir cosas terribles"] },
+            { id: 7, label: "Autoimagen", options: ["Me gusta como soy", "No me gusta como soy", "Me odio"] },
+            { id: 8, label: "Culpa", options: ["Generalmente no tengo la culpa de que ocurran cosas malas", "Muchas cosas malas son culpa mía", "Todas las cosas malas son culpa mía"] },
+            { id: 9, label: "Ideación Suicida", options: ["No pienso en matarme", "Pienso en matarme pero no lo haría", "Quiero matarme"] },
+            { id: 10, label: "Llantos", options: ["Tengo ganas de llorar de cuando en cuando", "Tengo ganas de llorar muchos días", "Tengo ganas de llorar todos los días"] },
+            { id: 11, label: "Irritabilidad", options: ["Las cosas me preocupan de cuando en cuando", "Las cosas me preocupan muchas veces", "Las cosas me preocupan siempre"] },
+            { id: 12, label: "Aislamiento", options: ["Me gusta estar con la gente", "Muy a menudo no me gusta estar con la gente", "No quiero en absoluto estar con la gente"] },
+            { id: 13, label: "Indecisión", options: ["Me decido fácilmente", "Me cuesta decidirme", "No puedo decidirme"] },
+            { id: 14, label: "Imagen Corporal", options: ["Tengo buen aspecto", "Hay algunas cosas de mi aspecto que no me gustan", "Soy feo"] },
+            { id: 15, label: "Esfuerzo", options: ["No me cuesta ponerme a hacer los deberes", "Muchas veces me cuesta ponerme a hacer los deberes", "Siempre me cuesta ponerme a hacer los deberes"] },
+            { id: 16, label: "Sueño", options: ["Duermo muy bien", "Muchas noches me cuesta dormirme", "Todas las noches me cuesta dormirme"] },
+            { id: 17, label: "Fatiga", options: ["Estoy cansado de cuando en cuando", "Estoy cansado muchos días", "Estoy siempre cansado"] },
+            { id: 18, label: "Apetito", options: ["Como muy bien", "Muchos días no tengo ganas de comer", "La mayoría de los días no tengo ganas de comer"] },
+            { id: 19, label: "Hipocondría", options: ["No me preocupa el dolor ni la enfermedad", "Muchas veces me preocupa el dolor y la enfermedad", "Siempre me preocupa el dolor y la enfermedad"] },
+            { id: 20, label: "Soledad", options: ["Nunca me siento solo", "Me siento solo muchas veces", "Me siento solo siempre"] },
+            { id: 21, label: "Desinterés Escolar", options: ["Me divierto en el colegio muchas veces", "Me divierto en el colegio sólo de vez en cuando", "Nunca me divierto en el colegio"] },
+            { id: 22, label: "Amistades", options: ["Tengo muchos amigos", "Tengo muchos amigos pero me gustaría tener más", "No tengo amigos"] },
+            { id: 23, label: "Rendimiento", options: ["Mi trabajo en el colegio es bueno", "Mi trabajo en el colegio no es tan bueno como antes", "Llevo muy mal las asignaturas que antes llevaba bien"] },
+            { id: 24, label: "Comparación Social", options: ["Soy tan bueno como otros niños", "Si quiero puedo ser tan bueno como otros niños", "Nunca podré ser tan bueno como otros niños"] },
+            { id: 25, label: "Cariño", options: ["Estoy seguro de que alguien me quiere", "No estoy seguro de que alguien me quiera", "Nadie me quiere"] },
+            { id: 26, label: "Obediencia", options: ["Generalmente hago lo que me dicen", "Muchas veces no hago lo que me dicen", "Nunca hago lo que me dicen"] },
+            { id: 27, label: "Conflictividad", options: ["Me llevo bien con la gente", "Me peleo muchas veces", "Me peleo siempre"] }
+        ];
+
+        const F1_IDS = [1, 6, 8, 10, 11, 13, 15, 16, 18, 19, 20, 21, 26, 27];
+        const F2_IDS = [2, 3, 7, 14, 23, 24, 25];
+
+        let state = { current: 0, answers: [], user: {}, selected: null };
+
+        function closePopup() { document.getElementById('cat-popup').style.display = 'none'; }
+        
+        function restartApp() {
+            state = { current: 0, answers: [], user: {}, selected: null };
+            document.getElementById('screen-report').classList.add('hidden');
+            document.getElementById('screen-setup').classList.remove('hidden');
+        }
+
+        document.getElementById('form-init').onsubmit = (e) => {
+            e.preventDefault();
+            state.user = {
+                name: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                grade: document.getElementById('grade').value,
+                pass: document.getElementById('pass').value
+            };
+            document.getElementById('screen-setup').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            renderQuestion();
+        };
+
+        function renderQuestion() {
+            const q = questions[state.current];
+            const grid = document.getElementById('options-grid');
+            document.getElementById('game-progress').style.width = `${(state.current / 27) * 100}%`;
+            document.getElementById('q-num').innerText = state.current + 1;
+            document.getElementById('question-text').innerText = "Escoge la opción que mejor te describa:";
+            document.getElementById('btn-next').disabled = true;
+
+            grid.innerHTML = q.options.map((opt, i) => `
+                <div onclick="pick(${i})" class="bubble-option p-6 rounded-2xl bg-white border border-slate-200 text-lg font-medium flex items-center" id="opt-${i}">
+                    <span class="w-4 h-4 rounded-full border-2 border-slate-200 mr-4"></span>
+                    ${opt}
+                </div>
+            `).join('');
+        }
+
+        window.pick = (val) => {
+            state.selected = val;
+            document.querySelectorAll('.bubble-option').forEach((el, i) => {
+                if(i === val) el.classList.add('selected-bubble');
+                else el.classList.remove('selected-bubble');
+            });
+            document.getElementById('btn-next').disabled = false;
+        };
+
+        document.getElementById('btn-next').onclick = () => {
+            state.answers.push({ 
+                id: questions[state.current].id, 
+                label: questions[state.current].label,
+                score: state.selected, 
+                text: questions[state.current].options[state.selected] 
+            });
+            state.current++;
+            if(state.current < 27) renderQuestion();
+            else {
+                document.getElementById('screen-game').classList.add('hidden');
+                document.getElementById('screen-lock').classList.remove('hidden');
+            }
+        };
+
+        function processFinalReport() {
+            if(document.getElementById('lock-pass').value !== state.user.pass) {
+                document.getElementById('lock-error').classList.remove('hidden');
+                return;
+            }
+            const total = state.answers.reduce((acc, c) => acc + c.score, 0);
+            showReport(total);
+        }
+
+        function generateAnalysis(score) {
+            const hasSuicideRisk = state.answers.find(a => a.id === 9 && a.score > 0);
+            let text = "";
+            if (score >= 19) text += "Puntaje clínico elevado. Sugiere sintomatología depresiva significativa.\n";
+            else text += "Puntaje dentro de parámetros normales. No se observa tendencia depresiva.\n";
+            if (hasSuicideRisk) text += "ADVERTENCIA: Riesgo detectado en el ítem de ideación suicida.";
+            return text;
+        }
+
+        function showReport(score) {
+            document.getElementById('screen-lock').classList.add('hidden');
+            document.getElementById('screen-report').classList.remove('hidden');
+            document.getElementById('rep-name').innerText = state.user.name;
+            document.getElementById('rep-age').innerText = state.user.age;
+            document.getElementById('rep-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('rep-score').innerText = score;
+            document.getElementById('rep-analysis').innerText = generateAnalysis(score);
+            const badge = document.getElementById('rep-badge');
+            badge.innerText = score >= 19 ? "NIVEL CLÍNICO" : "NORMAL";
+            badge.style.backgroundColor = score >= 19 ? "#dc2626" : "#10b981";
+        }
+
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const total = state.answers.reduce((acc, c) => acc + c.score, 0);
+            const f1 = state.answers.filter(a => F1_IDS.includes(a.id)).reduce((a,b)=>a+b.score, 0);
+            const f2 = state.answers.filter(a => F2_IDS.includes(a.id)).reduce((a,b)=>a+b.score, 0);
+            
+            const marginX = 15;
+            const pageWidth = 210;
+            const contentWidth = pageWidth - (marginX * 2); // 180mm
+
+            // CABECERA
+            pdf.setFillColor(15, 23, 42); 
+            pdf.rect(0, 0, pageWidth, 25, 'F');
+            pdf.setTextColor(255); 
+            pdf.setFontSize(16); 
+            pdf.text("INFORME CLÍNICO PSICOLÓGICO: CDI", marginX, 16);
+            
+            // DATOS GENERALES
+            pdf.autoTable({
+                startY: 30,
+                head: [['NOMBRE COMPLETO', 'EDAD', 'FECHA', 'PUNTAJE']],
+                body: [[state.user.name.toUpperCase(), state.user.age + " AÑOS", new Date().toLocaleDateString(), total + " / 54"]],
+                theme: 'striped', 
+                headStyles: { fillColor: [51, 65, 85] },
+                margin: { left: marginX, right: marginX }
+            });
+
+            let currentY = pdf.lastAutoTable.finalY + 15;
+
+            // FUNCIONES DE DIBUJO AJUSTADAS (Sin superposiciones)
+            const drawCard = (x, y, w, h, title) => {
+                pdf.setDrawColor(220); pdf.setFillColor(255); pdf.roundedRect(x, y, w, h, 2, 2, 'FD');
+                pdf.setFontSize(10); pdf.setTextColor(15, 23, 42); pdf.setFont("helvetica", "bold");
+                pdf.text(title, x + 5, y + 8);
+            };
+
+            const cardWidth = (contentWidth / 2) - 2.5;
+
+            // 6.1 DENSIDAD
+            drawCard(marginX, currentY, cardWidth, 55, "6.1. Densidad de Síntomas");
+            const circleX = marginX + (cardWidth / 2);
+            pdf.setFillColor(total >= 19 ? 220 : 200, total >= 19 ? 38 : 200, total >= 19 ? 38 : 200);
+            pdf.ellipse(circleX, currentY + 30, 15, 15, 'F');
+            pdf.setFillColor(255); pdf.rect(circleX - 15, currentY + 30, 30, 15, 'F');
+            pdf.setTextColor(total >= 19 ? 255 : 0); pdf.setFontSize(12);
+            pdf.text(Math.round((total / 54) * 100) + "%", circleX, currentY + 28, {align: 'center'});
+            pdf.setTextColor(100); pdf.setFontSize(7);
+            pdf.text("Cálculo: (Puntaje Directo / 54) * 100.", circleX, currentY + 47, {align: 'center'});
+            pdf.text("Interpretación: >35% indica alerta clínica.", circleX, currentY + 51, {align: 'center'});
+
+            // 6.2 BALANCE FACTORIAL (Corregido: etiquetas separadas)
+            const card2X = marginX + cardWidth + 5;
+            drawCard(card2X, currentY, cardWidth, 55, "6.2. Balance Factorial");
+            pdf.setFillColor(2, 132, 199); pdf.rect(card2X + 12, currentY + 40, 12, -(f1 * 1), 'F');
+            pdf.setFillColor(168, 85, 247); pdf.rect(card2X + 45, currentY + 40, 12, -(f2 * 1), 'F');
+            pdf.setFontSize(7); pdf.setTextColor(0);
+            pdf.text("Disforia (F1)", card2X + 12, currentY + 45); 
+            pdf.text("Autoestima (F2)", card2X + 45, currentY + 45);
+            pdf.setTextColor(100);
+            pdf.text("Cálculo: Suma de ítems específicos por factor.", card2X + 5, currentY + 51);
+
+            currentY += 60;
+
+            // 6.3 PIRÁMIDE
+            drawCard(marginX, currentY, cardWidth, 60, "6.3. Pirámide de Riesgo");
+            const triX = marginX + (cardWidth / 2);
+            pdf.setDrawColor(200); pdf.line(triX, currentY + 15, marginX + 10, currentY + 50); 
+            pdf.line(triX, currentY + 15, marginX + cardWidth - 10, currentY + 50); 
+            pdf.line(marginX + 10, currentY + 50, marginX + cardWidth - 10, currentY + 50);
+            const dotY = total >= 19 ? currentY + 25 : currentY + 45;
+            pdf.setFillColor(220, 38, 38); pdf.circle(triX, dotY, 2, 'F');
+            pdf.setFontSize(7); pdf.text("NIVEL ACTUAL", triX + 4, dotY + 1);
+            pdf.setTextColor(100);
+            pdf.text("Uso: Ubicación relativa frente al umbral clínico.", triX, currentY + 56, {align: 'center'});
+
+            // 6.4 IMPACTO (Corregido: Sin superposición de texto)
+            drawCard(card2X, currentY, cardWidth, 60, "6.4. Impacto Vida Diaria");
+            const areas = [
+                {l: "EMOCIONAL", a: f1 > 10}, {l: "COGNITIVO", a: f2 > 5},
+                {l: "ACADÉMICO", a: state.answers.find(a=>a.id===21)?.score > 0}, {l: "SOCIAL", a: state.answers.find(a=>a.id===22)?.score > 0}
+            ];
+            areas.forEach((a, i) => {
+                const ax = card2X + 5 + (i % 2 * 38);
+                const ay = currentY + 15 + (Math.floor(i / 2) * 18);
+                pdf.setFillColor(a.a ? 230 : 250); pdf.roundedRect(ax, ay, 33, 10, 1, 1, 'F');
+                pdf.setTextColor(a.a ? 0 : 180); pdf.setFontSize(6);
+                pdf.text(a.l, ax + 16.5, ay + 6.5, {align: 'center'});
+            });
+            pdf.setTextColor(100);
+            pdf.text("Interpretación: Áreas oscuras indican afectación.", card2X + 5, currentY + 56);
+
+            currentY += 65;
+
+            // PERFIL DE RIESGO VISUAL
+            pdf.setFontSize(10); pdf.setTextColor(0); pdf.text("Perfil de Riesgo Visual:", marginX, currentY);
+            pdf.setFillColor(240); pdf.rect(marginX, currentY + 4, contentWidth, 6, 'F');
+            pdf.setFillColor(220, 38, 38); pdf.rect(marginX, currentY + 4, (Math.min(total, 54) / 54) * contentWidth, 6, 'F');
+            const lx = marginX + (19 / 54) * contentWidth;
+            pdf.setDrawColor(0); pdf.line(lx, currentY + 2, lx, currentY + 12);
+            pdf.setFontSize(7); pdf.text("UMBRAL CLÍNICO (19 PTS)", lx, currentY + 16, {align: 'center'});
+
+            currentY += 25;
+
+            // EXPLICACIÓN DETALLADA DE FACTORES Y GRÁFICOS
+            pdf.setFontSize(11); pdf.setFont("helvetica", "bold"); pdf.text("Análisis Profundo de Factores y Gráficos", marginX, currentY);
+            pdf.setFont("helvetica", "normal"); pdf.setFontSize(8);
+            
+            const detailText = [
+                "Disforia (Factor 1): Es la dimensión que evalúa el humor triste, la irritabilidad, la anhedonia y problemas de conducta. Se obtiene sumando los ítems 1, 6, 8, 10, 11, 13, 15, 16, 18, 19, 20, 21, 26 y 27. Un puntaje alto aquí indica un estado de ánimo deprimido evidente.",
+                "Autoestima (Factor 2): Evalúa el autoconcepto negativo, sentimientos de ineficiencia y desesperanza. Se obtiene de los ítems 2, 3, 7, 14, 23, 24 y 25. Puntajes altos revelan una identidad debilitada y falta de confianza en el futuro.",
+                "Interpretación del Balance: Al comparar F1 y F2, el clínico puede determinar si la depresión es más reactiva/conductual (F1 dominante) o si está profundamente arraigada en la estructura de personalidad del niño (F2 dominante).",
+                "Metodología de Gráficos: La 'Densidad' muestra la severidad global. La 'Pirámide' sitúa al individuo en un continuo de riesgo. El 'Impacto' mapea qué esferas de la vida diaria están 'apagadas' por el síntoma."
+            ];
+
+            detailText.forEach((e, i) => {
+                const lines = pdf.splitTextToSize(e, contentWidth);
+                pdf.text(lines, marginX, currentY + 6 + (i * 11));
+            });
+
+            // NUEVA PÁGINA: INTERPRETACIÓN PREGUNTA POR PREGUNTA
+            pdf.addPage();
+            pdf.setFillColor(15, 23, 42); 
+            pdf.rect(0, 0, pageWidth, 20, 'F');
+            pdf.setTextColor(255); 
+            pdf.setFontSize(12); 
+            pdf.text("INTERPRETACIÓN CLÍNICA POR ÍTEM", marginX, 13);
+
+            const getInterpretation = (id, score) => {
+                if (score === 0) return "Ausencia de síntoma significativo.";
+                if (id === 9) return score === 1 ? "Presencia de ideación pasiva (ALERTA)." : "Ideación suicida activa (RIESGO CRÍTICO).";
+                if (id === 1) return "Tristeza manifiesta persistente.";
+                if (id === 7) return "Desvalorización severa de la propia identidad.";
+                if (id === 21) return "Falta de interés total en actividades escolares.";
+                return "Manifestación moderada/severa del rasgo evaluado.";
+            };
+
+            // FIX: Ajuste de anchos para evitar desbordamiento (Total ancho columnas = 180mm)
+            pdf.autoTable({
+                startY: 25,
+                head: [['ID', 'FACTOR / RASGO', 'RESPUESTA ELEGIDA', 'PTS', 'ANÁLISIS CLÍNICO']],
+                body: state.answers.map(a => [
+                    a.id, 
+                    a.label, 
+                    a.text, 
+                    a.score, 
+                    getInterpretation(a.id, a.score)
+                ]),
+                theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 2 },
+                headStyles: { fillColor: [51, 65, 85] },
+                columnStyles: { 
+                    0: { cellWidth: 8 },    // ID
+                    1: { cellWidth: 32 },   // Factor
+                    2: { cellWidth: 42 },   // Respuesta
+                    3: { cellWidth: 10 },   // Pts
+                    4: { cellWidth: 88 }    // Análisis (Cálculo: 180 - 8 - 32 - 42 - 10 = 88)
+                },
+                margin: { left: marginX, right: marginX }
+            });
+
+            pdf.save(`CDI_Report_${state.user.name}.pdf`);
+        }
+    </script>
+</body>
+</html>
